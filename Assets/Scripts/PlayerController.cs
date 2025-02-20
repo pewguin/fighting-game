@@ -81,7 +81,7 @@ public class PlayerController : MonoBehaviour
                 new MotionInput(new List<InputDirection> { InputDirection.Forward, InputDirection.Down, InputDirection.Back, InputDirection.Forward }, 
                 InputButton.Quick)))
         {
-            Debug.Log("POTEMKIN BUSTER");
+            Debug.Log("POTEMKIN BUSTAHHHHHHHH");
         }
     }
 
