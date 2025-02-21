@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,6 +10,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float deadband;
     private const float maximumBufferTime = 3f;
     private List<InputEntry> inputHistory = new List<InputEntry>();
+    public event Action<InputEntry> newButtonPressed;
 
     private static Dictionary<Vector2Int, InputDirection> directionMap = new()
     {
@@ -41,12 +43,13 @@ public class PlayerController : MonoBehaviour
         public InputDirection? Direction;
         public InputButton? Button;
         public float Time;
-
-        public InputEntry(InputDirection? direction, InputButton? button, float time)
+        public bool ButtonJustPressed;
+        public InputEntry(InputDirection? direction, InputButton? button, float time, bool buttonJustPressed = false)
         {
             Direction = direction;
             Button = button;
             Time = time;
+            ButtonJustPressed = buttonJustPressed;
         }
     }
     public enum InputDirection
@@ -83,6 +86,14 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log("POTEMKIN BUSTAHHHHHHHH");
         }
+        else if (CheckMotionInput(
+                new MotionInput(new List<InputDirection> { InputDirection.Forward, InputDirection.Down, InputDirection.DownForward },
+                InputButton.Power)))
+        {
+            Debug.Log("DP");
+            inputHistory.Clear();
+            rb.AddForce(Vector2.up * 50, ForceMode2D.Impulse);
+        }
     }
 
     public void GetInput()
@@ -90,6 +101,7 @@ public class PlayerController : MonoBehaviour
         inputHistory.RemoveAll(entry => Time.time - entry.Time > maximumBufferTime);
 
         InputButton? button = null;
+        bool justPressed = false;
 
         if (Input.GetKey(KeyCode.U))
             button = InputButton.Quick;
@@ -99,6 +111,12 @@ public class PlayerController : MonoBehaviour
             button = InputButton.Special;
         else if (Input.GetKey(KeyCode.K))
             button = InputButton.Ultra;
+
+        if (Input.GetKeyDown(KeyCode.U)
+        || Input.GetKeyDown(KeyCode.I)
+        || Input.GetKeyDown(KeyCode.J)
+        || Input.GetKeyDown(KeyCode.K))
+            justPressed = true;
 
         InputDirection? direction = null;
 
@@ -111,17 +129,19 @@ public class PlayerController : MonoBehaviour
 
         if (direction != null || button != null)
         {
+            InputEntry entry = new InputEntry(direction, button, Time.time, justPressed);
             if (inputHistory.Count > 0)
             {
                 InputEntry lastInput = inputHistory[inputHistory.Count - 1];
                 if (lastInput.Direction != direction || lastInput.Button != button)
                 {
-                    inputHistory.Add(new InputEntry(direction, button, Time.time));
+                    newButtonPressed?.Invoke(entry);
+                    inputHistory.Add(entry);
                 }
             } 
             else
             {
-                inputHistory.Add(new InputEntry(direction, button, Time.time));
+                inputHistory.Add(entry);
             }
         }
     }
@@ -132,21 +152,21 @@ public class PlayerController : MonoBehaviour
             Debug.LogError("Buffer time of inputs must be less than the maximum buffer time! Defaulting to the maximum buffer time.");
 
         int patternIndex = 0;
-        InputButton? recentButton = null;
+        InputButton? buttonDuringInput = null;
         foreach (var entry in inputHistory)
         {
             if (Time.time - entry.Time > input.BufferTime)
                 continue;
 
-            if (patternIndex > 0 && entry.Button.HasValue)
-                recentButton = entry.Button.Value;
+            if (patternIndex > 0 && entry.Button.HasValue && entry.ButtonJustPressed)
+                buttonDuringInput = entry.Button.Value;
 
             if (entry.Direction.HasValue && entry.Direction.Value == input.InputPattern[patternIndex])
             {
                 patternIndex++;
                 if (patternIndex >= input.InputPattern.Count)
                 {
-                    if (recentButton == input.Button)
+                    if (entry.Button == input.Button && buttonDuringInput == input.Button)
                     {
                         return true;
                     }
