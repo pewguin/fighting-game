@@ -11,6 +11,7 @@ public class InputDisplay : MonoBehaviour
     [SerializeField] List<Sprite> motionInputs; // Order: Neutral, Forward, Down Forward, etc.
     [SerializeField] List<Sprite> buttonInputs; // Order: Quick, Power, Special, Ultra
     [SerializeField] GameObject inputDisplayPrefab;
+    [SerializeField] AttackData[] attacks;
     [SerializeField] int inputsToDisplay = 10;
     private Dictionary<PlayerController.InputDirection, Sprite> directionInputMap;
     private Dictionary<PlayerController.InputButton, Sprite> buttonInputMap;

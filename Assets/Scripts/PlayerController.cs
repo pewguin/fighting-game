@@ -1,16 +1,21 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Animations;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
     private Rigidbody2D rb;
     [SerializeField] private float horizontalForce;
     [SerializeField] private float deadband;
-    private const float maximumBufferTime = 3f;
+    private const float maximumBufferTime = 0.5f;
+    [SerializeField] private float buttonBufferTime = 0.1f;
     private List<InputEntry> inputHistory = new List<InputEntry>();
+    private List<ButtonEntry> buttonHistory = new List<ButtonEntry>();
     public event Action<InputEntry> newButtonPressed;
+    private Animator animator;
 
     private static Dictionary<Vector2Int, InputDirection> directionMap = new()
     {
@@ -52,6 +57,16 @@ public class PlayerController : MonoBehaviour
             ButtonJustPressed = buttonJustPressed;
         }
     }
+    public struct ButtonEntry
+    {
+        public InputButton Button;
+        public float Time;
+        public ButtonEntry(InputButton button, float time)
+        {
+            Button = button;
+            Time = time;
+        }
+    }
     public enum InputDirection
     {
         Neutral, Forward, Back, Up, Down, UpForward, DownForward, UpBack, DownBack
@@ -64,6 +79,7 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
     }
     void Update()
     {
@@ -90,15 +106,15 @@ public class PlayerController : MonoBehaviour
                 new MotionInput(new List<InputDirection> { InputDirection.Forward, InputDirection.Down, InputDirection.DownForward },
                 InputButton.Power)))
         {
-            Debug.Log("DP");
             inputHistory.Clear();
-            rb.AddForce(Vector2.up * 50, ForceMode2D.Impulse);
+            animator.SetTrigger("Jab");
         }
     }
 
     public void GetInput()
     {
         inputHistory.RemoveAll(entry => Time.time - entry.Time > maximumBufferTime);
+        buttonHistory.RemoveAll(entry => Time.time - entry.Time > buttonBufferTime);
 
         InputButton? button = null;
         bool justPressed = false;
@@ -113,10 +129,13 @@ public class PlayerController : MonoBehaviour
             button = InputButton.Ultra;
 
         if (Input.GetKeyDown(KeyCode.U)
-        || Input.GetKeyDown(KeyCode.I)
-        || Input.GetKeyDown(KeyCode.J)
-        || Input.GetKeyDown(KeyCode.K))
+            || Input.GetKeyDown(KeyCode.I)
+            || Input.GetKeyDown(KeyCode.J)
+            || Input.GetKeyDown(KeyCode.K))
             justPressed = true;
+
+        if (justPressed && button.HasValue)
+            buttonHistory.Add(new ButtonEntry(button.Value, Time.time));
 
         InputDirection? direction = null;
 
@@ -152,27 +171,33 @@ public class PlayerController : MonoBehaviour
             Debug.LogError("Buffer time of inputs must be less than the maximum buffer time! Defaulting to the maximum buffer time.");
 
         int patternIndex = 0;
-        InputButton? buttonDuringInput = null;
         foreach (var entry in inputHistory)
         {
             if (Time.time - entry.Time > input.BufferTime)
                 continue;
-
-            if (patternIndex > 0 && entry.Button.HasValue && entry.ButtonJustPressed)
-                buttonDuringInput = entry.Button.Value;
 
             if (entry.Direction.HasValue && entry.Direction.Value == input.InputPattern[patternIndex])
             {
                 patternIndex++;
                 if (patternIndex >= input.InputPattern.Count)
                 {
-                    if (entry.Button == input.Button && buttonDuringInput == input.Button)
+                    if (CheckButtonHistory(input.Button))
                     {
                         return true;
                     }
                     return false;
                 }
             }
+        }
+        return false;
+    }
+
+    public bool CheckButtonHistory(InputButton button)
+    {
+        foreach (var entry in buttonHistory)
+        {
+            if (entry.Button == button)
+                return true;
         }
         return false;
     }
