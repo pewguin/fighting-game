@@ -6,43 +6,42 @@ using UnityEngine.UI;
 
 public class InputDisplay : MonoBehaviour
 {
-    [SerializeField] Transform imageParent;
-    [SerializeField] PlayerController player;
+    [SerializeField] InputBuffer buffer;
     [SerializeField] List<Sprite> motionInputs; // Order: Neutral, Forward, Down Forward, etc.
     [SerializeField] List<Sprite> buttonInputs; // Order: Quick, Power, Special, Ultra
     [SerializeField] GameObject inputDisplayPrefab;
-    [SerializeField] AttackData[] attacks;
     [SerializeField] int inputsToDisplay = 10;
-    private Dictionary<PlayerController.InputDirection, Sprite> directionInputMap;
-    private Dictionary<PlayerController.InputButton, Sprite> buttonInputMap;
+
+    private Dictionary<InputBuffer.InputDirection, Sprite> directionInputMap;
+    private Dictionary<InputBuffer.InputButton, Sprite> buttonInputMap;
     void Start()
     {
         directionInputMap = new()
         {
-            { PlayerController.InputDirection.Neutral, motionInputs[0] },
-            { PlayerController.InputDirection.Forward, motionInputs[1] },
-            { PlayerController.InputDirection.DownForward, motionInputs[2] },
-            { PlayerController.InputDirection.Down, motionInputs[3] },
-            { PlayerController.InputDirection.DownBack, motionInputs[4] },
-            { PlayerController.InputDirection.Back, motionInputs[5] },
-            { PlayerController.InputDirection.UpBack, motionInputs[6] },
-            { PlayerController.InputDirection.Up, motionInputs[7] },
-            { PlayerController.InputDirection.UpForward, motionInputs[8] },
+            { InputBuffer.InputDirection.Neutral, motionInputs[0] },
+            { InputBuffer.InputDirection.Forward, motionInputs[1] },
+            { InputBuffer.InputDirection.DownForward, motionInputs[2] },
+            { InputBuffer.InputDirection.Down, motionInputs[3] },
+            { InputBuffer.InputDirection.DownBack, motionInputs[4] },
+            { InputBuffer.InputDirection.Back, motionInputs[5] },
+            { InputBuffer.InputDirection.UpBack, motionInputs[6] },
+            { InputBuffer.InputDirection.Up, motionInputs[7] },
+            { InputBuffer.InputDirection.UpForward, motionInputs[8] },
         };
         buttonInputMap = new()
         {
-            { PlayerController.InputButton.Quick, buttonInputs[0] },
-            { PlayerController.InputButton.Power, buttonInputs[1] },
-            { PlayerController.InputButton.Special, buttonInputs[2] },
-            { PlayerController.InputButton.Ultra, buttonInputs[3] },
+            { InputBuffer.InputButton.Light, buttonInputs[0] },
+            { InputBuffer.InputButton.Medium, buttonInputs[1] },
+            { InputBuffer.InputButton.Heavy, buttonInputs[2] },
+            { InputBuffer.InputButton.Special, buttonInputs[3] },
         };
-        player.newButtonPressed += OnNewButton;
+        buffer.newButtonPressed += OnNewButton;
     }
 
-    private void OnNewButton(PlayerController.InputEntry input)
+    private void OnNewButton(InputBuffer.InputEntry input)
     {
-        GameObject imageObj = Instantiate(inputDisplayPrefab, imageParent);
-        if (input.Direction.HasValue && input.Direction.Value != PlayerController.InputDirection.Neutral && directionInputMap.TryGetValue(input.Direction.Value, out Sprite dir))
+        GameObject imageObj = Instantiate(inputDisplayPrefab, transform);
+        if (input.Direction.HasValue && input.Direction.Value != InputBuffer.InputDirection.Neutral && directionInputMap.TryGetValue(input.Direction.Value, out Sprite dir))
         {
             Image dirimg = imageObj.GetComponentsInChildren<Image>()[1];
             dirimg.enabled = true;
@@ -59,11 +58,11 @@ public class InputDisplay : MonoBehaviour
             }
         }
         imageObj.transform.SetAsFirstSibling();
-        if (imageParent.childCount > inputsToDisplay)
+        if (transform.childCount > inputsToDisplay)
         {
-            for (int i = inputsToDisplay; i < imageParent.childCount - 1; i++)
+            for (int i = inputsToDisplay; i < transform.childCount - 1; i++)
             {
-                Destroy(imageParent.GetChild(i).gameObject);
+                Destroy(transform.GetChild(i).gameObject);
             }
         }
     }
