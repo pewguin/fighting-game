@@ -53,7 +53,7 @@ public class HitboxEditorWindow : EditorWindow {
 		if (!showHitboxes) return;
 		if (move == null) return;
 		SerializedObject moveSO = new SerializedObject(move);
-		SerializedProperty hitboxesPerFrame = moveSO.FindProperty("hitboxesPerFrame");
+		SerializedProperty hitboxesPerFrame = moveSO.FindProperty("frameData");
 		if (hitboxesPerFrame.arraySize == 0) return;
 		SerializedProperty hitboxes = hitboxesPerFrame.GetArrayElementAtIndex(frame - 1).FindPropertyRelative("hitboxes");
 		if (hitboxes == null) return;

@@ -16,58 +16,46 @@ MonoBehaviour:
     InputPattern: 01000000
     Button: 0
     BufferTime: 0
-  hitboxesPerFrame:
+  frameData:
   - hitboxes:
     - serializedVersion: 2
-      x: 0.107990265
-      y: -0.48363882
-      width: 0.70609695
-      height: 0.97851074
+      x: -0.13544193
+      y: -0.11482164
+      width: 0.3172855
+      height: 0.22032383
+    animationFrame: 0
   - hitboxes:
     - serializedVersion: 2
-      x: 0.107990265
-      y: -0.3836695
-      width: 1.0544972
-      height: 0.8247037
+      x: -0.13544196
+      y: -0.12204173
+      width: 0.70025635
+      height: 0.22754392
+    animationFrame: 0
   - hitboxes:
     - serializedVersion: 2
-      x: 0.107990265
-      y: -0.3947788
-      width: 1.3010246
-      height: 0.835813
+      x: -0.13544214
+      y: -0.12204173
+      width: 1.3745314
+      height: 0.39813218
+    animationFrame: 0
   - hitboxes:
     - serializedVersion: 2
-      x: 0.107990265
-      y: -0.3947878
-      width: 1.3458852
-      height: 0.835822
+      x: -0.13544214
+      y: -0.12204173
+      width: 1.2031991
+      height: 0.3769156
+    animationFrame: 0
   - hitboxes:
     - serializedVersion: 2
-      x: 0.107990265
-      y: -0.3947878
-      width: 1.3458852
-      height: 0.835822
+      x: -0.13544205
+      y: -0.12204173
+      width: 0.32492453
+      height: 0.27082038
+    animationFrame: 0
   - hitboxes:
     - serializedVersion: 2
-      x: 0.107990265
-      y: -0.3947878
-      width: 1.3458852
-      height: 0.835822
-  - hitboxes:
-    - serializedVersion: 2
-      x: 0.107990265
-      y: -0.2728687
-      width: 1.2226892
-      height: 0.7139029
-  - hitboxes:
-    - serializedVersion: 2
-      x: 0.107990384
-      y: -0.052087665
-      width: 0.8991084
-      height: 0.49312186
-  - hitboxes:
-    - serializedVersion: 2
-      x: 0.107990324
-      y: -0.10680401
-      width: 0.4667222
-      height: 0.5478382
+      x: -0.13544205
+      y: -0.20088902
+      width: 0.20913486
+      height: 0.34966767
+    animationFrame: 0
