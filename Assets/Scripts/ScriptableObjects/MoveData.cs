@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,9 +7,15 @@ using UnityEngine;
 public class MoveData : ScriptableObject
 {
     public InputBuffer.MotionInput input;
-    public int startupFrames;
-    public int activeFrames;
-    public int recoveryFrames;
-	public CollisionManager.Hitbox[][] composedHitboxes;
-	public CollisionManager.Hitbox[][] composedHurtboxes;
+	public List<FrameData> frameData = new List<FrameData>();
+	public int TotalFrames() {
+		if (frameData == null) return 0;
+		return frameData.Count;
+	}
+}
+
+[Serializable]
+public class FrameData {
+	public List<Rect> hitboxes = new List<Rect>();
+	public int animationFrame = 0;
 }

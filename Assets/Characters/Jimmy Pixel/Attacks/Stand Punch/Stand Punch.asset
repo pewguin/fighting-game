@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9578cfa4e9887514ba466822730a05bf, type: 3}
+  m_Name: Stand Punch
+  m_EditorClassIdentifier: 
+  input:
+    InputPattern: 01000000
+    Button: 0
+    BufferTime: 0
+  hitboxesPerFrame:
+  - hitboxes:
+    - serializedVersion: 2
+      x: 0.107990265
+      y: -0.48363882
+      width: 0.70609695
+      height: 0.97851074
+  - hitboxes:
+    - serializedVersion: 2
+      x: 0.107990265
+      y: -0.3836695
+      width: 1.0544972
+      height: 0.8247037
+  - hitboxes:
+    - serializedVersion: 2
+      x: 0.107990265
+      y: -0.3947788
+      width: 1.3010246
+      height: 0.835813
+  - hitboxes:
+    - serializedVersion: 2
+      x: 0.107990265
+      y: -0.3947878
+      width: 1.3458852
+      height: 0.835822
+  - hitboxes:
+    - serializedVersion: 2
+      x: 0.107990265
+      y: -0.3947878
+      width: 1.3458852
+      height: 0.835822
+  - hitboxes:
+    - serializedVersion: 2
+      x: 0.107990265
+      y: -0.3947878
+      width: 1.3458852
+      height: 0.835822
+  - hitboxes:
+    - serializedVersion: 2
+      x: 0.107990265
+      y: -0.2728687
+      width: 1.2226892
+      height: 0.7139029
+  - hitboxes:
+    - serializedVersion: 2
+      x: 0.107990384
+      y: -0.052087665
+      width: 0.8991084
+      height: 0.49312186
+  - hitboxes:
+    - serializedVersion: 2
+      x: 0.107990324
+      y: -0.10680401
+      width: 0.4667222
+      height: 0.5478382

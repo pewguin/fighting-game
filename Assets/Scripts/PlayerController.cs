@@ -27,18 +27,5 @@ public class PlayerController : MonoBehaviour {
         }
 
         rb.AddForce(velocity, ForceMode2D.Force);
-
-        //if (CheckMotionInput(
-        //        new MotionInput(new List<InputDirection> { InputDirection.Forward, InputDirection.Down, InputDirection.Back, InputDirection.Forward }, 
-        //        InputButton.Quick)))
-        //{
-            
-        //}
-        //else if (CheckMotionInput(
-        //        new MotionInput(new List<InputDirection> { InputDirection.Forward, InputDirection.Down, InputDirection.DownForward },
-        //        InputButton.Power)))
-        //{
-
-        //}
     }
 }
