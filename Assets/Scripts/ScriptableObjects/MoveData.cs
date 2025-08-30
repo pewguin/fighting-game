@@ -16,6 +16,16 @@ public class MoveData : ScriptableObject
 
 [Serializable]
 public class FrameData {
-	public List<Rect> hitboxes = new List<Rect>();
+	public List<Hitbox> hitboxes = new List<Hitbox>();
 	public int animationFrame = 0;
+}
+[Serializable]
+public enum HitboxType {
+	Hitbox,
+	Hurtbox,
+}
+[Serializable]
+public class Hitbox {
+	public Rect box = new(0, 0, 1, 1);
+	public HitboxType type = 0;
 }

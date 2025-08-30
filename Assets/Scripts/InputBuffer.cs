@@ -1,19 +1,28 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+
+public enum InputDirection {
+	Neutral, Forward, Back, Up, Down, UpForward, DownForward, UpBack, DownBack
+}
+public enum InputButton {
+	Light, Medium, Heavy, Special
+}
 
 public class InputBuffer : MonoBehaviour
 {
 	private List<InputEntry> inputHistory = new List<InputEntry>();
-	private List<ButtonEntry> buttonHistory = new List<ButtonEntry>();
-	public event Action<InputEntry> newButtonPressed;
+	private List<ButtonEntry> inputBuffer = new List<ButtonEntry>();
+	public InputDirection? lastMovement = InputDirection.Neutral;
+	public Action<InputEntry> onInput;
 	[Tooltip("Time before inputs are fully cleared from the buffer")]
-	[SerializeField] float maximumBufferTime = 0.5f;
+	[SerializeField] int maximumHistoryFrames = 20;
+	[SerializeField] int maximumBufferFrames = 5;
 	[SerializeField] float deadband;
 
-	
-	private static Dictionary<Vector2Int, InputDirection> directionMap = new()
+	public static Dictionary<Vector2Int, InputDirection> vecToDirectionMap = new()
 	{
 		{ new Vector2Int(0, 0), InputDirection.Neutral },
 		{ new Vector2Int(0, 1), InputDirection.Up },
@@ -25,13 +34,15 @@ public class InputBuffer : MonoBehaviour
 		{ new Vector2Int(-1, 0), InputDirection.Back },
 		{ new Vector2Int(-1, 1), InputDirection.UpBack },
 	};
+	public static Dictionary<InputDirection, Vector2Int> directionToVecMap;
+
 	[Serializable]
 	public struct MotionInput {
 		public List<InputDirection> InputPattern;
 		public InputButton Button;
-		public float BufferTime;
+		public int BufferTime;
 
-		public MotionInput(List<InputDirection> inputPattern, InputButton button, float bufferTime) {
+		public MotionInput(List<InputDirection> inputPattern, InputButton button, int bufferTime) {
 			InputPattern = inputPattern;
 			Button = button;
 			BufferTime = bufferTime;
@@ -40,9 +51,9 @@ public class InputBuffer : MonoBehaviour
 	public struct InputEntry {
 		public InputDirection? Direction;
 		public InputButton? Button;
-		public float Time;
+		public int Time;
 		public bool ButtonJustPressed;
-		public InputEntry(InputDirection? direction, InputButton? button, float time, bool buttonJustPressed = false) {
+		public InputEntry(InputDirection? direction, InputButton? button, int time, bool buttonJustPressed = false) {
 			Direction = direction;
 			Button = button;
 			Time = time;
@@ -51,22 +62,19 @@ public class InputBuffer : MonoBehaviour
 	}
 	public struct ButtonEntry {
 		public InputButton Button;
-		public float Time;
-		public ButtonEntry(InputButton button, float time) {
+		public int Time;
+		public ButtonEntry(InputButton button, int time) {
 			Button = button;
 			Time = time;
 		}
 	}
-	public enum InputDirection {
-		Neutral, Forward, Back, Up, Down, UpForward, DownForward, UpBack, DownBack
-	}
-	public enum InputButton {
-		Light, Medium, Heavy, Special
+	private void Awake() {
+		directionToVecMap = vecToDirectionMap.ToDictionary(kv => kv.Value, kv => kv.Key);
 	}
 
-	public void GetInput() {
-		inputHistory.RemoveAll(entry => Time.time - entry.Time > maximumBufferTime);
-		buttonHistory.RemoveAll(entry => Time.time - entry.Time > maximumBufferTime);
+	public void GetInput(int framesSinceBeginning) {
+		inputHistory.RemoveAll(entry => framesSinceBeginning - entry.Time > maximumHistoryFrames);
+		inputBuffer.RemoveAll(entry => framesSinceBeginning - entry.Time > maximumBufferFrames);
 
 		InputButton? button = null;
 		bool justPressed = false;
@@ -86,29 +94,31 @@ public class InputBuffer : MonoBehaviour
 			|| Input.GetKeyDown(KeyCode.K))
 			justPressed = true;
 
-		if (justPressed && button.HasValue)
-			buttonHistory.Add(new ButtonEntry(button.Value, Time.time));
-
 		InputDirection? direction = null;
 
 		Vector2Int directionVector = new(
 			Mathf.RoundToInt(ApplyDeadband(Input.GetAxisRaw("Horizontal"), deadband)),
 			Mathf.RoundToInt(ApplyDeadband(Input.GetAxisRaw("Vertical"), deadband)));
 
-		if (directionMap.TryGetValue(directionVector, out InputDirection dir))
+		if (vecToDirectionMap.TryGetValue(directionVector, out InputDirection dir)) {
 			direction = dir;
+			lastMovement = dir;
+		}
 
 		if (direction != null || button != null) {
-			InputEntry entry = new InputEntry(direction, button, Time.time, justPressed);
+			InputEntry entry = new InputEntry(direction, button, framesSinceBeginning, justPressed);
 			if (inputHistory.Count > 0) {
 				InputEntry lastInput = inputHistory[inputHistory.Count - 1];
 				if (lastInput.Direction != direction || lastInput.Button != button) {
-					newButtonPressed?.Invoke(entry);
 					inputHistory.Add(entry);
+					onInput.Invoke(entry);
 				}
 			} else {
 				inputHistory.Add(entry);
 			}
+		}
+		if (button != null && justPressed) {
+			inputBuffer.Add(new ButtonEntry((InputButton)button, framesSinceBeginning));
 		}
 	}
 	public bool CheckMotionInput(MotionInput input) {
@@ -116,25 +126,27 @@ public class InputBuffer : MonoBehaviour
 		foreach (var entry in inputHistory) {
 			if (Time.time - entry.Time > input.BufferTime)
 				continue;
-
 			if (entry.Direction.HasValue && entry.Direction.Value == input.InputPattern[patternIndex]) {
 				patternIndex++;
 				if (patternIndex >= input.InputPattern.Count) {
-					if (CheckButtonHistory(input.Button)) {
-						return true;
-					}
-					return false;
+					return CheckBuffer(input.Button);
 				}
 			}
 		}
 		return false;
 	}
-	public bool CheckButtonHistory(InputButton button) {
-		foreach (var entry in buttonHistory) {
-			if (entry.Button == button)
+	public bool CheckBuffer(InputButton[] buttons) {
+		List<InputButton> remainingButtons = buttons.ToList();
+		foreach (var entry in inputBuffer) {
+			remainingButtons.Remove(entry.Button);
+			if (remainingButtons.Count <= 0) {
 				return true;
+			}
 		}
 		return false;
+	}
+	public bool CheckBuffer(InputButton button) {
+		return CheckBuffer(new InputButton[]{ button });
 	}
 	private float ApplyDeadband(float val, float deadband) {
 		if (val > deadband) {

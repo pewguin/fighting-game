@@ -10,6 +10,9 @@ public class HitboxEditorWindow : EditorWindow {
 	private int animationFrame = 0;
 	private bool showHitboxes = true;
 	private MoveData move;
+	private PlayerController player;
+	private Color hitboxColor = Color.green;
+	private Color hurtboxColor = Color.cyan;
 	[MenuItem("Fighting Game/Hitbox Editor")]
     public static void StartWindow() {
 		HitboxEditorWindow window = GetWindow<HitboxEditorWindow>();
@@ -21,11 +24,13 @@ public class HitboxEditorWindow : EditorWindow {
 		showHitboxes = EditorGUILayout.Toggle("Show Hitboxes", showHitboxes);
 		int lastFrame = frame;
 		frame = EditorGUILayout.IntSlider("Frame", frame, 1, move.TotalFrames());
-		if (lastFrame != frame) SceneView.RepaintAll();
-
 		EditorGUILayout.BeginHorizontal();
 		SerializedObject moveSO = new SerializedObject(move);
 		SerializedProperty frames = moveSO.FindProperty("frameData");
+		if (lastFrame != frame) {
+			SceneView.RepaintAll();
+			animationFrame = frames.GetArrayElementAtIndex(frame - 1).FindPropertyRelative("animationFrame").intValue;
+		}
 		if (GUILayout.Button(new GUIContent("Add Frame"))) {
 			frames.InsertArrayElementAtIndex(frame);
 			frame += 1;
@@ -35,11 +40,26 @@ public class HitboxEditorWindow : EditorWindow {
 			frame = Mathf.Max(frame - 1, 1);
 		}
 		EditorGUILayout.EndHorizontal();
-		if (GUILayout.Button(new GUIContent("Add Collider"))) {
-			SerializedProperty hitboxes = frames.GetArrayElementAtIndex(frame - 1).FindPropertyRelative("hitboxes");
+		EditorGUILayout.BeginHorizontal();
+		SerializedProperty hitboxes = frames.GetArrayElementAtIndex(frame - 1).FindPropertyRelative("hitboxes");
+		if (GUILayout.Button(new GUIContent("Add Hitbox"))) {
 			hitboxes.InsertArrayElementAtIndex(hitboxes.arraySize);
-			hitboxes.GetArrayElementAtIndex(hitboxes.arraySize - 1).rectValue = new Rect(0f, 0f, 1f, 1f);
+			hitboxes.GetArrayElementAtIndex(hitboxes.arraySize - 1).FindPropertyRelative("type").intValue = (int)HitboxType.Hitbox;
+			hitboxes.GetArrayElementAtIndex(hitboxes.arraySize - 1).FindPropertyRelative("box").rectValue = new(-0.5f, -0.5f, 1f, 1f);
 			SceneView.RepaintAll();
+		}
+		if (GUILayout.Button(new GUIContent("Add Hurtbox"))) {
+			hitboxes.InsertArrayElementAtIndex(hitboxes.arraySize);
+			hitboxes.GetArrayElementAtIndex(hitboxes.arraySize - 1).FindPropertyRelative("type").intValue = (int)HitboxType.Hurtbox;
+			hitboxes.GetArrayElementAtIndex(hitboxes.arraySize - 1).FindPropertyRelative("box").rectValue = new(-0.5f, -0.5f, 1f, 1f);
+			SceneView.RepaintAll();
+		}
+		EditorGUILayout.EndHorizontal();
+		player = (PlayerController)EditorGUILayout.ObjectField("Player", player, typeof(PlayerController), true);
+		if (player != null) {
+			animationFrame = EditorGUILayout.IntSlider("Animation Frame", animationFrame, 1, player.TotalAnimationFrames());
+			player.SetAnimationFrame(animationFrame - 1);
+			frames.GetArrayElementAtIndex(frame - 1).FindPropertyRelative("animationFrame").intValue = animationFrame;
 		}
 		moveSO.ApplyModifiedProperties();
 	}
@@ -59,7 +79,7 @@ public class HitboxEditorWindow : EditorWindow {
 		if (hitboxes == null) return;
 		for (int i = 0; i < hitboxes.arraySize; i++) {
 			SerializedProperty hitboxSerialized = hitboxes.GetArrayElementAtIndex(i);
-			Rect hitbox = hitboxSerialized.rectValue;
+			Rect hitbox = hitboxSerialized.FindPropertyRelative("box").rectValue;
 			Vector2[] corners = GetCorners(hitbox);
 			for (int j = 0; j < corners.Length; j++) {
 				Vector2 newCorner = Handles.FreeMoveHandle(corners[j], 0.05f, Vector3.zero, Handles.RectangleHandleCap);
@@ -70,8 +90,14 @@ public class HitboxEditorWindow : EditorWindow {
 				}
 			}
 			hitbox.center = Handles.FreeMoveHandle(hitbox.center, 0.05f, Vector3.zero, Handles.RectangleHandleCap);
-			Handles.DrawSolidRectangleWithOutline(hitbox, new Color(0f, 1f, 0f, 0.2f), Color.green);
-			hitboxSerialized.rectValue = hitbox;
+			Color color = Color.white;
+			if (hitboxSerialized.FindPropertyRelative("type").intValue == (int)HitboxType.Hitbox) {
+				color = hitboxColor;
+			} else if (hitboxSerialized.FindPropertyRelative("type").intValue == (int)HitboxType.Hurtbox) {
+				color = hurtboxColor;
+			}
+			Handles.DrawSolidRectangleWithOutline(hitbox, color.WithAlpha(0.2f), color);
+			hitboxSerialized.FindPropertyRelative("box").rectValue = hitbox;
 		}
 		moveSO.ApplyModifiedProperties();
 	}
